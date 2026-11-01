@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- DESIGN.md 2 colours -->
+    <color name="bg">#FFF7F4</color>
+    <color name="ink">#4A1D3D</color>
+</resources>

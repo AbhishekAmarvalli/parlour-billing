@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* Nunito, bundled so the app works with no internet. DESIGN.md 3. */
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("./assets/nunito-latin.woff2") format("woff2");
+}
+
+@theme {
+  --color-bg: #fff7f4;
+  --color-surface: #ffffff;
+  --color-ink: #4a1d3d;
+  --color-rose: #b83a62;
+  --color-muted: #6b5560;
+  --color-soft: #f3dce3;
+  --color-line: #efe0e3;
+  --color-inputline: #d9c3c9;
+  --color-track: #f3e6e9;
+  --font-sans: Nunito, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+button {
+  font-family: inherit;
+}
+
+input {
+  font-family: inherit;
+}
