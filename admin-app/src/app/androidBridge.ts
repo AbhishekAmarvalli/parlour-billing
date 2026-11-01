@@ -11,12 +11,14 @@ interface AndroidBridge {
   saveFile(name: string, base64: string): void
   pickContact?: () => void
   readClipboard?: () => string
+  takeSharedText?: () => string
 }
 
 declare global {
   interface Window {
     AndroidBridge?: AndroidBridge
     __onContactPicked?: (contact: PickedContact) => void
+    __pullSharedContact?: () => void
   }
 }
 
@@ -74,5 +76,23 @@ export function setContactPickerHandler(handler: (contact: PickedContact) => voi
   window.__onContactPicked = handler
   return () => {
     if (window.__onContactPicked === handler) delete window.__onContactPicked
+  }
+}
+
+/** Take the text shared into the app (WhatsApp share target), or null. */
+export function takeSharedText(): string | null {
+  try {
+    const text = window.AndroidBridge?.takeSharedText?.()
+    return text && text.trim() !== '' ? text : null
+  } catch {
+    return null
+  }
+}
+
+/** The Java side calls this when a new share arrives while the app is open. */
+export function setSharedTextNudge(handler: () => void): () => void {
+  window.__pullSharedContact = handler
+  return () => {
+    if (window.__pullSharedContact === handler) delete window.__pullSharedContact
   }
 }

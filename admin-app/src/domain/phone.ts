@@ -21,3 +21,52 @@ export function phoneFromText(text: string): string | null {
   if (digits.length < 10) return null
   return digits.slice(-10)
 }
+
+export interface SharedContact {
+  name: string
+  phone: string
+}
+
+function unvcard(value: string): string {
+  return value
+    .trim()
+    .replace(/^"|"$/g, '')
+    .replace(/\\n/gi, ' ')
+    .replace(/\\,/g, ',')
+    .replace(/\\;/g, ';')
+    .replace(/\\\\/g, '\\')
+}
+
+/**
+ * Read a share from WhatsApp: a contact card (vCard) gives name + number,
+ * plain shared text gives the number only. Null when there is no mobile.
+ */
+export function parseSharedContact(text: string): SharedContact | null {
+  if (!text || !text.trim()) return null
+
+  if (/BEGIN:VCARD/i.test(text)) {
+    const lines = text.split(/\r?\n/)
+    const field = (key: string): string[] =>
+      lines
+        .filter((line) => new RegExp(`^${key}(?:;[^:]*)?:`, 'i').test(line))
+        .map((line) => unvcard(line.replace(new RegExp(`^${key}(?:;[^:]*)?:`, 'i'), '')))
+        .filter((value) => value !== '')
+
+    const fn = field('FN')[0] ?? ''
+    const n = field('N')[0] ?? ''
+    let name = fn
+    if (!name && n) {
+      const [family = '', given = ''] = n.split(';')
+      name = [given, family].filter((part) => part.trim() !== '').join(' ')
+    }
+
+    for (const tel of field('TEL')) {
+      const phone = phoneFromText(tel)
+      if (phone) return { name: name.trim(), phone }
+    }
+    return null
+  }
+
+  const phone = phoneFromText(text)
+  return phone ? { name: '', phone } : null
+}

@@ -48,11 +48,14 @@ public class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
     private WebChromeClient.FileChooserParams filePathParams;
+    /** Text shared into the app (WhatsApp share target), waiting for JavaScript to take it. */
+    private volatile String pendingSharedText = "";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        handleShareIntent(getIntent());
 
         webView = new WebView(this);
         setContentView(webView);
@@ -118,6 +121,69 @@ public class MainActivity extends Activity {
             webView.loadUrl(APP_URL);
         } else {
             webView.restoreState(savedInstanceState);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleShareIntent(intent);
+        if (intent != null && Intent.ACTION_SEND.equals(intent.getAction())) {
+            // The app is already open: tell JavaScript to come and collect it.
+            runOnUiThread(() -> webView.evaluateJavascript(
+                    "window.__pullSharedContact && window.__pullSharedContact()", null));
+        }
+    }
+
+    /** Stores the text of a share (contact card as vCard, or plain text). */
+    private void handleShareIntent(Intent intent) {
+        if (intent == null || !Intent.ACTION_SEND.equals(intent.getAction())) {
+            return;
+        }
+        String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+        if (text == null || text.trim().isEmpty()) {
+            // A shared contact card arrives as a content:// stream.
+            Uri stream = null;
+            try {
+                stream = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+            } catch (Exception ignored) {
+                // Some senders put nothing usable here.
+            }
+            if (stream != null) {
+                text = readStream(stream);
+            }
+        }
+        if (text != null && !text.trim().isEmpty()) {
+            pendingSharedText = text;
+        }
+    }
+
+    private String readStream(Uri uri) {
+        java.io.InputStream in = null;
+        try {
+            in = getContentResolver().openInputStream(uri);
+            if (in == null) {
+                return "";
+            }
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = in.read(buffer)) > 0) {
+                out.write(buffer, 0, read);
+            }
+            return out.toString("UTF-8");
+        } catch (Exception ignored) {
+            // An unreadable share simply arrives as nothing.
+            return "";
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (Exception ignored) {
+                    // Nothing left to do.
+                }
+            }
         }
     }
 
@@ -204,6 +270,14 @@ public class MainActivity extends Activity {
                 // Some phones block clipboard reads; the app just shows nothing.
             }
             return "";
+        }
+
+        /** The shared WhatsApp text, taken exactly once. */
+        @JavascriptInterface
+        public String takeSharedText() {
+            final String text = pendingSharedText;
+            pendingSharedText = "";
+            return text == null ? "" : text;
         }
 
         @JavascriptInterface

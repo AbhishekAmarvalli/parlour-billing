@@ -54,6 +54,7 @@ A mobile admin app for a beauty parlour. The owner makes bills on their Android 
 - Requirements gathered through a question-and-answer round.
 - Clickable mockup made (6 screens: PIN, Home, New Bill, Check Bill, Customer Log, Reports). Settings screen not yet drawn.
 - Full plan written as a document.
+- **APK v1.4.0 built** (2 Nov 2026): WhatsApp **share target** — sharing a contact card (vCard) or a plain number to *Parlour Admin* opens a new bill with name and number filled. Pulled (not pushed) so a share that arrives at the PIN screen still opens after unlock. `singleTask` launch mode; accepts `text/plain` and `text/vcard`.
 - **APK v1.3.0 built** (2 Nov 2026): adds customer lookup — **Pick from contacts** (system contact picker, name + mobile into the bill) and **Paste number** (a number copied from a WhatsApp chat). The app cannot read WhatsApp's private database; the contact list holds the same numbers WhatsApp uses. All of v1.2.0 below still applies. APK: `ParlourAdmin-v1.3.0.apk`.
 - **APK v1.2.0 built** (2 Nov 2026): one phone, owner = admin, all data stored locally. PIN lock, New Bill, Check Bill, Home, Bills (+cancel with reason), Reports, Excel/PDF export to Downloads, Settings (parlour details, price list, change PIN, backup/restore). v1.2.0 fixes: data refreshes right after a save (no app restart), the draft survives back/Change something, changing the PIN in Settings cannot lock the app, an older backup cannot rewind bill numbers, clearer labels and a receipt launcher icon. Code in `admin-app/` + `android/`. APK at repo root: `ParlourAdmin-v1.2.0.apk`. Demo data: `sample-backup.json`.
 - **Published on GitHub** (2 Nov 2026): private repo `AbhishekAmarvalli/parlour-billing`, personal details scrubbed (family references, local paths, sample parlour address/phone/GSTIN).
@@ -92,4 +93,5 @@ A mobile admin app for a beauty parlour. The owner makes bills on their Android 
 - 1 Nov 2026: Admin APK v1.0.0 built (read-only view, file import for data).
 - 1 Nov 2026: Confirmed with the requester: owner is the admin, bills are made and stored on the one phone. v1.1.0 adds New Bill, Check Bill, Settings, cancel and Excel/PDF export; the old Data tab moved into Settings as backup/restore.
 - 2 Nov 2026: v1.2.0 after phone testing — clearer screens, receipt icon, and four bug fixes (immediate data refresh, draft kept on back, PIN side-effect in Settings, bill numbers on restore). Published to GitHub (private).
-- 2 Nov 2026: v1.3.0 — customer contacts: pick from the phone's contact list, or paste a number copied from WhatsApp.
+- 2 Nov 2026: v1.3.0 — customer contacts: pick from the phone's contact list, or paste a number copied from WhatsApp. GitHub release v1.3.0 created.
+- 2 Nov 2026: v1.4.0 — share-to-app target from WhatsApp opens a new bill.

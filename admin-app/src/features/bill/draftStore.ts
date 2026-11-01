@@ -25,3 +25,25 @@ export function setDraft(form: DraftForm): void {
 export function clearDraft(): void {
   current = null
 }
+
+// A contact shared from WhatsApp waits here until the New Bill screen takes it.
+let sharedContact: { name: string; phone: string } | null = null
+const listeners = new Set<() => void>()
+
+export function stashSharedContact(contact: { name: string; phone: string }): void {
+  sharedContact = contact
+  listeners.forEach((listener) => listener())
+}
+
+export function takeSharedContact(): { name: string; phone: string } | null {
+  const contact = sharedContact
+  sharedContact = null
+  return contact
+}
+
+export function onSharedContactChange(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}

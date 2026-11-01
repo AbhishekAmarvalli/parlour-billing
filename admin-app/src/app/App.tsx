@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { DataProvider } from './DataProvider'
 import BottomNav from './BottomNav'
+import SharedContactBridge from './SharedContactBridge'
 import PinScreen from '../features/pin/PinScreen'
 import HomeScreen from '../features/home/HomeScreen'
 import LogScreen from '../features/log/LogScreen'
@@ -41,6 +42,7 @@ export default function App() {
         <PinScreen onUnlock={() => setUnlocked(true)} />
       ) : (
         <HashRouter>
+          <SharedContactBridge />
           <DataProvider>
             <main className="flex-1 px-5 pt-5 pb-28">
               <Routes>

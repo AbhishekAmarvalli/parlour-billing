@@ -20,7 +20,8 @@ import type { PaymentMode } from '../../domain/types'
 import { findCustomerByPhone } from '../../data/repo'
 import { getDraft, setDraft } from './draftStore'
 import { canPickContact, openContactPicker, readClipboardText, setContactPickerHandler } from '../../app/androidBridge'
-import { normalizePhone, phoneFromText } from '../../domain/phone'
+import { normalizePhone, phoneFromText, type SharedContact } from '../../domain/phone'
+import { onSharedContactChange, takeSharedContact } from './draftStore'
 
 export default function NewBillScreen() {
   const { services } = useData()
@@ -69,14 +70,29 @@ export default function NewBillScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone])
 
+  // A contact shared from WhatsApp fills name and number when this screen opens
+  // or when the share arrives while it is already open.
+  useEffect(() => {
+    function apply() {
+      const contact = takeSharedContact()
+      if (contact) applyContact(contact)
+    }
+    apply()
+    return onSharedContactChange(apply)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function applyContact(contact: SharedContact) {
+    const digits = normalizePhone(contact.phone)
+    if (digits) setPhone(digits)
+    if (contact.name && contact.name.trim()) setName(contact.name.trim())
+  }
+
   // "Pick contact" from the phone's contact list fills name and number.
   useEffect(() => {
     if (!canPickContact()) return
-    return setContactPickerHandler((contact) => {
-      const digits = normalizePhone(contact.phone)
-      if (digits) setPhone(digits)
-      if (contact.name && contact.name.trim()) setName(contact.name.trim())
-    })
+    return setContactPickerHandler(applyContact)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function pasteFromClipboard() {

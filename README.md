@@ -6,13 +6,14 @@ files can be made any time.
 
 Built from the plan in `PRD.md`, `ARCHITECTURE.md`, `DESIGN.md` and `RULES.md`.
 
-## What is in the app (v1.3.0)
+## What is in the app (v1.4.0)
 
 | Screen | What it does |
 | --- | --- |
 | **PIN lock** | First launch makes a 4 digit PIN (stored hashed, 3 wrong tries wait 30 seconds, auto-lock after 5 minutes idle) — PRD F1 |
 | **Home** | Today's money, customers, Cash/UPI split, latest bills — PRD F6 |
 | **New Bill** | Name + 10 digit phone (old customers fill in), **Pick from contacts** brings in a customer's name and mobile from the phone's contact list, **Paste number** takes a number copied from a WhatsApp chat, tap a service price, add products with typed price and GST 5/12/18, flat discount, Cash or UPI, total always visible — PRD F3 |
+| **Share from WhatsApp** | Share a contact card or a number from WhatsApp to **Parlour Admin** — the app opens a new bill with the name and number already filled in |
 | **Check Bill** | Full bill with GST breakup before saving; Save Bill / Change something — PRD F4 |
 | **Save & numbering** | Saved to the phone at once, numbers 0001, 0002 with no gaps — PRD F5 |
 | **Customer Log** | Search name or phone, Today / This week / This month, open any bill — PRD F7 |
@@ -26,7 +27,7 @@ is in `admin-app/src/domain/` with unit tests, and bills are never deleted — o
 
 ## Install
 
-Copy **`ParlourAdmin-v1.3.0.apk`** (repo root) to an Android phone and open it. Allow
+Copy **`ParlourAdmin-v1.4.0.apk`** (repo root) to an Android phone and open it. Allow
 "install from unknown sources" when asked. Android 7.0+ (minSdk 24).
 
 ## Try the exports

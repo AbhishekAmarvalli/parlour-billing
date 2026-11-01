@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { splitGst } from '../src/domain/gst'
 import { addProductLine, addServiceLine, draftTotals, removeLine, updateLine } from '../src/domain/draft'
 import { checkDraft, phoneSchema } from '../src/domain/validation'
-import { normalizePhone, phoneFromText } from '../src/domain/phone'
+import { normalizePhone, parseSharedContact, phoneFromText } from '../src/domain/phone'
 import type { Draft } from '../src/domain/draft'
 import { computeTotals, grandTotal, totalOfLines } from '../src/domain/totals'
 import { formatBillNumber, nextBillNumber } from '../src/domain/numbering'
@@ -230,6 +230,32 @@ describe('contact numbers (RULES A1.2)', () => {
     expect(phoneFromText('Hi, my number is +91 98765 43210, call me')).toBe('9876543210')
     expect(phoneFromText('see you at 7 pm tomorrow')).toBeNull()
     expect(phoneFromText('')).toBeNull()
+  })
+
+  it('reads a contact card shared from WhatsApp', () => {
+    const vcard = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      'FN:Priya Sharma',
+      'N:Sharma;Priya;;;',
+      'TEL;type=CELL;waid=1234:+91 98765 43210',
+      'END:VCARD',
+    ].join('\n')
+    expect(parseSharedContact(vcard)).toEqual({ name: 'Priya Sharma', phone: '9876543210' })
+  })
+
+  it('builds a name from the N field when FN is missing', () => {
+    const vcard = 'BEGIN:VCARD\nN:Doe;John;;;\nTEL;type=CELL:9876543210\nEND:VCARD'
+    expect(parseSharedContact(vcard)).toEqual({ name: 'John Doe', phone: '9876543210' })
+  })
+
+  it('takes a plain shared number, and rejects junk', () => {
+    expect(parseSharedContact('9876543210')).toEqual({ name: '', phone: '9876543210' })
+    expect(parseSharedContact('shared a photo')).toBeNull()
+    expect(parseSharedContact('')).toBeNull()
+    expect(
+      parseSharedContact('BEGIN:VCARD\nFN:No Number\nEND:VCARD'),
+    ).toBeNull()
   })
 })
 
