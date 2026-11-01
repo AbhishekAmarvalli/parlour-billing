@@ -3,13 +3,16 @@ package com.parlour.billing.admin;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
@@ -23,6 +26,8 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import androidx.webkit.WebViewAssetLoader;
+
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,6 +43,7 @@ public class MainActivity extends Activity {
     private static final String APP_URL = "https://appassets.androidplatform.net/index.html";
     private static final int FILE_CHOOSER_REQUEST = 1;
     private static final int STORAGE_PERMISSION_REQUEST = 2;
+    private static final int PICK_CONTACT_REQUEST = 3;
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
@@ -117,6 +123,12 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PICK_CONTACT_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                handleContactPicked(data);
+            }
+            return;
+        }
         if (requestCode == FILE_CHOOSER_REQUEST) {
             if (filePathCallback == null) {
                 return;
@@ -163,8 +175,36 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
-    /** Called from JavaScript: saves base64 bytes into the phone's Download folder. */
+    /** Called from JavaScript: opens the phone's contact picker (no contacts
+     *  permission needed — the system picker answers for us). */
     public class AndroidBridge {
+
+        @JavascriptInterface
+        public void pickContact() {
+            runOnUiThread(() -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_PICK);
+                    intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
+                    startActivityForResult(intent, PICK_CONTACT_REQUEST);
+                } catch (ActivityNotFoundException e) {
+                    toast("No contact app found on this phone");
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public String readClipboard() {
+            try {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                if (clipboard != null && clipboard.hasPrimaryClip() && clipboard.getPrimaryClip().getItemCount() > 0) {
+                    CharSequence text = clipboard.getPrimaryClip().getItemAt(0).coerceToText(MainActivity.this);
+                    return text == null ? "" : text.toString();
+                }
+            } catch (Exception ignored) {
+                // Some phones block clipboard reads; the app just shows nothing.
+            }
+            return "";
+        }
 
         @JavascriptInterface
         public void saveFile(String name, String base64) {
@@ -211,6 +251,54 @@ public class MainActivity extends Activity {
 
         private void toast(final String message) {
             runOnUiThread(() -> Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show());
+        }
+    }
+
+    /** Sends the chosen contact's name and number to the New Bill screen. */
+    private void handleContactPicked(Intent data) {
+        String name = "";
+        String number = "";
+        try {
+            Uri uri = data != null ? data.getData() : null;
+            if (uri != null) {
+                Cursor picked = getContentResolver().query(
+                        uri,
+                        new String[]{ContactsContract.Data.CONTACT_ID, ContactsContract.CommonDataKinds.Phone.NUMBER},
+                        null, null, null);
+                if (picked != null) {
+                    if (picked.moveToFirst()) {
+                        String contactId = picked.getString(0);
+                        number = picked.getString(1) == null ? "" : picked.getString(1);
+                        if (contactId != null) {
+                            Cursor names = getContentResolver().query(
+                                    ContactsContract.Contacts.CONTENT_URI,
+                                    new String[]{ContactsContract.Contacts.DISPLAY_NAME},
+                                    ContactsContract.Contacts._ID + "=?",
+                                    new String[]{contactId},
+                                    null);
+                            if (names != null) {
+                                if (names.moveToFirst()) {
+                                    name = names.getString(0) == null ? "" : names.getString(0);
+                                }
+                                names.close();
+                            }
+                        }
+                    }
+                    picked.close();
+                }
+            }
+        } catch (Exception ignored) {
+            // A broken contact just leaves the fields empty.
+        }
+
+        try {
+            JSONObject payload = new JSONObject();
+            payload.put("name", name);
+            payload.put("phone", number);
+            final String js = "window.__onContactPicked && window.__onContactPicked(" + payload + ")";
+            runOnUiThread(() -> webView.evaluateJavascript(js, null));
+        } catch (Exception ignored) {
+            // Nothing to send back.
         }
     }
 }

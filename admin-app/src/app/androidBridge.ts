@@ -1,14 +1,22 @@
-// Saves files from the web app to the phone's Download folder through the
-// Java bridge (MainActivity.saveFile). On a desktop browser it falls back to a
-// normal download, so the exports can be tried during development.
+// Saves files from the web app to the phone's Download folder, reads the
+// clipboard and opens the phone's contact picker — all through the Java bridge
+// (MainActivity.AndroidBridge). On a desktop browser these are simply absent.
+
+export interface PickedContact {
+  name: string
+  phone: string
+}
 
 interface AndroidBridge {
   saveFile(name: string, base64: string): void
+  pickContact?: () => void
+  readClipboard?: () => string
 }
 
 declare global {
   interface Window {
     AndroidBridge?: AndroidBridge
+    __onContactPicked?: (contact: PickedContact) => void
   }
 }
 
@@ -36,4 +44,35 @@ export function saveFile(name: string, bytes: Uint8Array): 'phone' | 'browser' {
   a.click()
   window.setTimeout(() => URL.revokeObjectURL(url), 5000)
   return 'browser'
+}
+
+/** True when the Android contact picker and clipboard are available. */
+export function canPickContact(): boolean {
+  return Boolean(window.AndroidBridge?.pickContact && window.AndroidBridge?.readClipboard)
+}
+
+/** Open the phone's contact picker (the same numbers WhatsApp uses). */
+export function openContactPicker(): void {
+  window.AndroidBridge?.pickContact?.()
+}
+
+/** Read what is currently on the clipboard, or null when unavailable. */
+export function readClipboardText(): string | null {
+  try {
+    const text = window.AndroidBridge?.readClipboard?.()
+    return text ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Register the handler the Java bridge calls after a contact is chosen.
+ * Returns a cleanup function.
+ */
+export function setContactPickerHandler(handler: (contact: PickedContact) => void): () => void {
+  window.__onContactPicked = handler
+  return () => {
+    if (window.__onContactPicked === handler) delete window.__onContactPicked
+  }
 }

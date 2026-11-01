@@ -19,6 +19,8 @@ import { formatRupees, parseRupees } from '../../domain/money'
 import type { PaymentMode } from '../../domain/types'
 import { findCustomerByPhone } from '../../data/repo'
 import { getDraft, setDraft } from './draftStore'
+import { canPickContact, openContactPicker, readClipboardText, setContactPickerHandler } from '../../app/androidBridge'
+import { normalizePhone, phoneFromText } from '../../domain/phone'
 
 export default function NewBillScreen() {
   const { services } = useData()
@@ -66,6 +68,23 @@ export default function NewBillScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone])
+
+  // "Pick contact" from the phone's contact list fills name and number.
+  useEffect(() => {
+    if (!canPickContact()) return
+    return setContactPickerHandler((contact) => {
+      const digits = normalizePhone(contact.phone)
+      if (digits) setPhone(digits)
+      if (contact.name && contact.name.trim()) setName(contact.name.trim())
+    })
+  }, [])
+
+  function pasteFromClipboard() {
+    const text = readClipboardText()
+    if (!text) return
+    const digits = phoneFromText(text)
+    if (digits) setPhone(digits)
+  }
 
   const activeServices = services.filter((s) => s.active)
   const productLines = lines.filter((l) => l.kind === 'product')
@@ -120,6 +139,24 @@ export default function NewBillScreen() {
               placeholder="98765 43210"
             />
           </Field>
+          {canPickContact() ? (
+            <div className="-mt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => openContactPicker()}
+                className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-[1.5px] border-ink bg-surface px-3 text-sm font-extrabold text-ink active:bg-track"
+              >
+                Pick from contacts
+              </button>
+              <button
+                type="button"
+                onClick={pasteFromClipboard}
+                className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-[1.5px] border-ink bg-surface px-3 text-sm font-extrabold text-ink active:bg-track"
+              >
+                Paste number
+              </button>
+            </div>
+          ) : null}
         </div>
       </Card>
 

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { splitGst } from '../src/domain/gst'
 import { addProductLine, addServiceLine, draftTotals, removeLine, updateLine } from '../src/domain/draft'
 import { checkDraft, phoneSchema } from '../src/domain/validation'
+import { normalizePhone, phoneFromText } from '../src/domain/phone'
 import type { Draft } from '../src/domain/draft'
 import { computeTotals, grandTotal, totalOfLines } from '../src/domain/totals'
 import { formatBillNumber, nextBillNumber } from '../src/domain/numbering'
@@ -211,6 +212,24 @@ describe('form validation (RULES B6.2, A1)', () => {
   it('stops a discount bigger than the bill', () => {
     const errors = checkDraft({ ...goodDraft, discount: 999999 })
     expect(errors).toContain('Discount cannot be more than the bill')
+  })
+})
+
+describe('contact numbers (RULES A1.2)', () => {
+  it('normalises messy contact numbers to 10 digits', () => {
+    expect(normalizePhone('98765 43210')).toBe('9876543210')
+    expect(normalizePhone('+91 98765 43210')).toBe('9876543210')
+    expect(normalizePhone('09876543210')).toBe('9876543210')
+    expect(normalizePhone('0091-98765-43210')).toBe('9876543210')
+    expect(normalizePhone('9876543210')).toBe('9876543210')
+    expect(normalizePhone('')).toBe('')
+  })
+
+  it('finds a number in a copied WhatsApp message', () => {
+    expect(phoneFromText('9876543210')).toBe('9876543210')
+    expect(phoneFromText('Hi, my number is +91 98765 43210, call me')).toBe('9876543210')
+    expect(phoneFromText('see you at 7 pm tomorrow')).toBeNull()
+    expect(phoneFromText('')).toBeNull()
   })
 })
 
