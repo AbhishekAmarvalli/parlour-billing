@@ -1,5 +1,11 @@
 # Parlour Billing — Android APK
 
+[![Download the APK](https://img.shields.io/badge/Download-Parlour_Admin_APK-B83A62?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhishekAmarvalli/parlour-billing/releases/latest/download/ParlourAdmin-latest.apk)
+[![latest release](https://img.shields.io/github/v/release/AbhishekAmarvalli/parlour-billing?label=release&color=4A1D3D)](https://github.com/AbhishekAmarvalli/parlour-billing/releases)
+
+The button above always downloads the **newest APK** straight to your phone.
+All releases: [github.com/AbhishekAmarvalli/parlour-billing/releases](https://github.com/AbhishekAmarvalli/parlour-billing/releases)
+
 One app, one phone, no internet needed. The owner **is** the admin: she makes every bill on
 her phone, the app stores it locally, and only this phone holds the data. Reports and Excel/PDF
 files can be made any time.
@@ -27,7 +33,7 @@ is in `admin-app/src/domain/` with unit tests, and bills are never deleted — o
 
 ## Install
 
-Copy **`ParlourAdmin-v1.4.0.apk`** (repo root) to an Android phone and open it. Allow
+Copy **`ParlourAdmin-v1.4.0.apk`** (repo root, or use the button at the top) to an Android phone and open it. Allow
 "install from unknown sources" when asked. Android 7.0+ (minSdk 24).
 
 ## Try the exports
@@ -111,6 +117,17 @@ export PATH="$JAVA_HOME/bin:/path/to/gradle-8.14.3/bin:$PATH"
 
 `android/local.properties` points `sdk.dir` at `.build-tools/android-sdk`.
 Launcher icons: `node android/tools/make-icon.mjs`.
+
+When publishing a new release, upload the APK **twice**: as `ParlourAdmin-vX.Y.Z.apk`
+and again as `ParlourAdmin-latest.apk` — the download button above points at the
+latest asset, so it keeps working for every future version:
+
+```bash
+gh release create vX.Y.Z ParlourAdmin-vX.Y.Z.apk --title "vX.Y.Z" --notes "..."
+cp ParlourAdmin-vX.Y.Z.apk ParlourAdmin-latest.apk
+gh release upload vX.Y.Z ParlourAdmin-latest.apk
+rm ParlourAdmin-latest.apk
+```
 
 ## Notes
 
