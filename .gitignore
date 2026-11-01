@@ -2,11 +2,9 @@
 node_modules/
 dist/
 .build-tools/
+jdk21.zip
 android/build/
 android/app/build/
 android/.gradle/
 android/local.properties
 *.log
-jdk21.zip
-*.zip
-!.build-tools/

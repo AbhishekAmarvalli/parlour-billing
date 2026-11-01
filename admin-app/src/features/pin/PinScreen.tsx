@@ -16,7 +16,7 @@ export default function PinScreen({ onUnlock }: Props) {
   const [pending, setPending] = useState('')
   const [message, setMessage] = useState('')
   const [waitLeft, setWaitLeft] = useState(() => (isLocked() ? lockWaitLeft() : 0))
-  const [parlourName, setParlourName] = useState('Parlour Admin')
+  const [parlourName, setParlourName] = useState('Parlour')
 
   useEffect(() => {
     db.settings.toCollection().first().then((s) => {
@@ -115,7 +115,7 @@ export default function PinScreen({ onUnlock }: Props) {
             aria-label={`Digit ${d}`}
             onClick={() => press(d)}
             disabled={locked}
-            className="min-h-16 rounded-full bg-white/15 text-2xl font-extrabold text-white active:bg-white/30 disabled:opacity-40"
+            className="min-h-16 rounded-full bg-white/20 text-2xl font-extrabold text-white active:bg-white/35 disabled:opacity-40"
           >
             {d}
           </button>
@@ -126,7 +126,7 @@ export default function PinScreen({ onUnlock }: Props) {
           aria-label="Digit 0"
           onClick={() => press('0')}
           disabled={locked}
-          className="min-h-16 rounded-full bg-white/15 text-2xl font-extrabold text-white active:bg-white/30 disabled:opacity-40"
+          className="min-h-16 rounded-full bg-white/20 text-2xl font-extrabold text-white active:bg-white/35 disabled:opacity-40"
         >
           0
         </button>
@@ -135,7 +135,7 @@ export default function PinScreen({ onUnlock }: Props) {
           aria-label="Delete last digit"
           onClick={backspace}
           disabled={locked || pin.length === 0}
-          className="flex min-h-16 items-center justify-center rounded-full bg-white/15 text-white active:bg-white/30 disabled:opacity-40"
+          className="flex min-h-16 items-center justify-center rounded-full bg-white/20 text-white active:bg-white/35 disabled:opacity-40"
         >
           <BackspaceIcon className="h-7 w-7" />
         </button>

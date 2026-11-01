@@ -25,7 +25,7 @@ export default function BillScreen() {
   async function doCancel() {
     if (!bill) return
     await cancelBill(bill.id, reason.trim() || 'Cancelled by owner')
-    reload()
+    await reload()
     setConfirming(false)
     setCancelMsg('This bill is cancelled')
   }
@@ -118,13 +118,18 @@ export default function BillScreen() {
         )}
       </Card>
 
+      {cancelMsg ? (
+        <p className="rounded-2xl bg-ink px-4 py-3 text-sm font-bold text-soft" role="status">
+          {cancelMsg}
+        </p>
+      ) : null}
+
       {bill.status === 'active' && (
         <Card>
           <p className="text-lg font-extrabold">Cancel this bill</p>
           <p className="mt-1 text-sm text-muted">
             The bill keeps its number and stays in the log, but leaves every total.
           </p>
-          {cancelMsg ? <p className="mt-2 text-sm font-bold text-muted">{cancelMsg}</p> : null}
           {!confirming ? (
             <div className="mt-3">
               <Button variant="secondary" onClick={() => setConfirming(true)}>

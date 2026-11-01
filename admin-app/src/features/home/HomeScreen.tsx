@@ -9,7 +9,7 @@ import { formatRupees } from '../../domain/money'
 import { formatBillNumber } from '../../domain/numbering'
 import { billSummary } from '../../domain/summary'
 import { itemsOf } from '../../data/repo'
-import { EmptyLine } from '../../ui/kit'
+import { Button } from '../../ui/kit'
 import { GearIcon, LockIcon } from '../../ui/icons'
 
 export default function HomeScreen({ onLock }: { onLock: () => void }) {
@@ -89,6 +89,10 @@ export default function HomeScreen({ onLock }: { onLock: () => void }) {
         </div>
       </section>
 
+      <Button onClick={() => navigate('/new-bill')} tall>
+        + Make New Bill
+      </Button>
+
       <section>
         <div className="flex items-baseline justify-between">
           <h2 className="text-lg font-extrabold">Latest Bills</h2>
@@ -98,7 +102,13 @@ export default function HomeScreen({ onLock }: { onLock: () => void }) {
         </div>
         <div className="mt-3 flex flex-col gap-3">
           {bills.length === 0 && !loading ? (
-            <EmptyLine text="No bills yet. Tap New Bill to start." />
+            <div className="rounded-2xl border border-dashed border-line bg-surface p-6 text-center">
+              <p className="text-base font-bold text-ink">No bills yet</p>
+              <p className="mt-1 text-sm text-muted">Tap Make New Bill to write the first one.</p>
+              <div className="mt-4">
+                <Button onClick={() => navigate('/new-bill')}>Make New Bill</Button>
+              </div>
+            </div>
           ) : (
             bills.slice(0, 4).map((bill) => (
               <button

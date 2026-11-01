@@ -12,7 +12,7 @@ import { clearDraft, getDraft } from './draftStore'
 
 export default function CheckBillScreen() {
   const navigate = useNavigate()
-  const { settings } = useData()
+  const { settings, reload } = useData()
   const [saving, setSaving] = useState(false)
 
   const stored = getDraft()
@@ -50,6 +50,9 @@ export default function CheckBillScreen() {
     try {
       const number = await saveNewBill(draft)
       clearDraft()
+      // Re-read the database before showing Home, so the new bill and today's
+      // totals are there straight away — no reopening the app needed.
+      await reload()
       navigate(`/?saved=${number}`, { replace: true })
     } catch {
       setSaving(false)

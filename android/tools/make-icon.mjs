@@ -1,5 +1,5 @@
-// Generates the launcher icons (plum square, three white bars) into the mipmap folders.
-// Run from the repo root: node android/tools/make-icon.mjs
+// Generates the launcher icons: a plum rounded square with a white bill/receipt
+// and a rose "total" line. Run from the repo root: node android/tools/make-icon.mjs
 import { deflateSync } from 'node:zlib'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -10,6 +10,8 @@ const resDir = join(here, '..', 'app', 'src', 'main', 'res')
 
 const PLUM = [0x4a, 0x1d, 0x3d, 255]
 const WHITE = [0xff, 0xff, 0xff, 255]
+const ROSE = [0xb8, 0x3a, 0x62, 255]
+const CLEAR = [0, 0, 0, 0]
 
 function crc32(buf) {
   let crc = 0xffffffff
@@ -48,7 +50,8 @@ function png(width, height, pixels) {
   ])
 }
 
-function roundedRectPixel(x, y, left, top, w, h, r) {
+/** True when (x, y) sits inside a rounded rectangle. */
+function inRoundedRect(x, y, left, top, w, h, r) {
   if (x < left || y < top || x >= left + w || y >= top + h) return false
   const cx = Math.min(Math.max(x, left + r), left + w - 1 - r)
   const cy = Math.min(Math.max(y, top + r), top + h - 1 - r)
@@ -57,7 +60,6 @@ function roundedRectPixel(x, y, left, top, w, h, r) {
 
 function makeIcon(size) {
   const pixels = Buffer.alloc(size * size * 4)
-  const radius = Math.round(size * 0.22)
   const set = (x, y, rgba) => {
     const i = (y * size + x) * 4
     pixels[i] = rgba[0]
@@ -65,26 +67,39 @@ function makeIcon(size) {
     pixels[i + 2] = rgba[2]
     pixels[i + 3] = rgba[3]
   }
-  const barHeights = [0.32, 0.52, 0.4]
-  const barTop = 0.24
-  const gap = size * 0.07
-  const barW = (size - 4 * gap) / 3
-  const barRadius = Math.max(1, Math.round(size * 0.03))
+
+  const bgRadius = Math.round(size * 0.22)
+  const receipt = {
+    left: Math.round(size * 0.27),
+    top: Math.round(size * 0.16),
+    w: Math.round(size * 0.46),
+    h: Math.round(size * 0.68),
+    r: Math.round(size * 0.05),
+  }
+  // Three text lines inside the bill.
+  const lineX = Math.round(size * 0.34)
+  const lineW = Math.round(size * 0.32)
+  const lineH = Math.max(2, Math.round(size * 0.045))
+  const lines = [0.3, 0.42, 0.54].map((f) => Math.round(size * f))
+  // The rose "total" bar.
+  const totalY = Math.round(size * 0.68)
+  const totalH = Math.max(3, Math.round(size * 0.055))
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      if (!roundedRectPixel(x, y, 0, 0, size, size, radius)) {
-        set(x, y, [0, 0, 0, 0])
+      if (!inRoundedRect(x, y, 0, 0, size, size, bgRadius)) {
+        set(x, y, CLEAR)
         continue
       }
-      let color = PLUM
-      for (let b = 0; b < 3; b++) {
-        const left = Math.round(gap + b * (barW + gap))
-        const h = Math.round(size * barHeights[b])
-        const top = Math.round(size * barTop + (size * 0.5 - h))
-        if (roundedRectPixel(x, y, left, top, Math.round(barW), h, barRadius)) color = WHITE
+      if (!inRoundedRect(x, y, receipt.left, receipt.top, receipt.w, receipt.h, receipt.r)) {
+        set(x, y, PLUM)
+        continue
       }
-      set(x, y, color)
+      const onLine = lines.some((ly) => y >= ly && y < ly + lineH && x >= lineX && x < lineX + lineW)
+      const onTotal = y >= totalY && y < totalY + totalH && x >= lineX && x < lineX + lineW
+      if (onTotal) set(x, y, ROSE)
+      else if (onLine) set(x, y, PLUM)
+      else set(x, y, WHITE)
     }
   }
   return png(size, size, pixels)

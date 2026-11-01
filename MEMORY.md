@@ -54,8 +54,8 @@ A mobile admin app for a beauty parlour. The owner makes bills on their Android 
 - Requirements gathered through a question-and-answer round.
 - Clickable mockup made (6 screens: PIN, Home, New Bill, Check Bill, Customer Log, Reports). Settings screen not yet drawn.
 - Full plan written as a document.
-- **APK v1.1.0 built** (1 Nov 2026): one phone, owner = admin, all data stored locally. PIN lock, New Bill, Check Bill, Home, Log (+cancel with reason), Reports, Excel/PDF export to Downloads, Settings (parlour details, price list, change PIN, backup/restore). Code in `admin-app/` (React web app per ARCHITECTURE.md) + `android/` (WebView wrapper with a file-save bridge). APK at repo root: `ParlourAdmin-v1.1.0.apk`. Demo data: `sample-backup.json`.
-- No online sync yet (F9/F10): the monthly backup JSON file is how data reaches another phone.
+- **APK v1.2.0 built** (2 Nov 2026): one phone, owner = admin, all data stored locally. PIN lock, New Bill, Check Bill, Home, Bills (+cancel with reason), Reports, Excel/PDF export to Downloads, Settings (parlour details, price list, change PIN, backup/restore). v1.2.0 fixes: data refreshes right after a save (no app restart), the draft survives back/Change something, changing the PIN in Settings cannot lock the app, an older backup cannot rewind bill numbers, clearer labels and a receipt launcher icon. Code in `admin-app/` + `android/`. APK at repo root: `ParlourAdmin-v1.2.0.apk`. Demo data: `sample-backup.json`.
+- **Published on GitHub** (2 Nov 2026): private repo `AbhishekAmarvalli/parlour-billing`, personal details scrubbed (family references, local paths, sample parlour address/phone/GSTIN).
 
 ## Links
 
@@ -90,3 +90,4 @@ A mobile admin app for a beauty parlour. The owner makes bills on their Android 
 - 1 Nov 2026: Removed WhatsApp bill sending; bills are stored for admin only.
 - 1 Nov 2026: Admin APK v1.0.0 built (read-only view, file import for data).
 - 1 Nov 2026: Confirmed with the requester: owner is the admin, bills are made and stored on the one phone. v1.1.0 adds New Bill, Check Bill, Settings, cancel and Excel/PDF export; the old Data tab moved into Settings as backup/restore.
+- 2 Nov 2026: v1.2.0 after phone testing — clearer screens, receipt icon, and four bug fixes (immediate data refresh, draft kept on back, PIN side-effect in Settings, bill numbers on restore). Published to GitHub (private).

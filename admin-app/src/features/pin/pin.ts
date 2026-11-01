@@ -78,6 +78,13 @@ function clearLock(): void {
   localStorage.removeItem(LOCK_KEY)
 }
 
+/** Check the typed PIN without touching the wrong-try counter (Settings uses this). */
+export function checkPin(pin: string): boolean {
+  const stored = readStored()
+  if (!stored) return false
+  return sha256Hex(pin + stored.salt) === stored.hash
+}
+
 /** Check the typed PIN. Wrong tries count up to 3, then the app waits 30 seconds. */
 export function verifyPin(pin: string): boolean {
   const stored = readStored()

@@ -6,7 +6,7 @@ files can be made any time.
 
 Built from the plan in `PRD.md`, `ARCHITECTURE.md`, `DESIGN.md` and `RULES.md`.
 
-## What is in the app (v1.1.0)
+## What is in the app (v1.2.0)
 
 | Screen | What it does |
 | --- | --- |
@@ -26,7 +26,7 @@ is in `admin-app/src/domain/` with unit tests, and bills are never deleted — o
 
 ## Install
 
-Copy **`ParlourAdmin-v1.1.0.apk`** (repo root) to an Android phone and open it. Allow
+Copy **`ParlourAdmin-v1.2.0.apk`** (repo root) to an Android phone and open it. Allow
 "install from unknown sources" when asked. Android 7.0+ (minSdk 24).
 
 ## Try the exports

@@ -10,7 +10,7 @@ import { buildBackup } from '../../data/backupExport'
 import { saveFile } from '../../app/androidBridge'
 import { parseRupees } from '../../domain/money'
 import { settingsSchema } from '../../domain/validation'
-import { isValidPin, setPin, verifyPin } from '../pin/pin'
+import { checkPin, isValidPin, setPin } from '../pin/pin'
 import type { Service } from '../../domain/types'
 import { timeLabel } from '../../domain/dates'
 
@@ -85,6 +85,7 @@ export default function SettingsScreen() {
       return
     }
     await saveSettings(parlour)
+    await reload()
     setDetailsMsg('Details saved')
   }
 
@@ -111,12 +112,13 @@ export default function SettingsScreen() {
       updated_at: Date.now(),
     }))
     await saveServices(cleaned)
-    reload()
+    await reload()
     setListMsg('Price list saved')
   }
 
   function changePin() {
-    if (!verifyPin(currentPin)) {
+    // checkPin does not count a wrong try, so a typo here cannot lock the app.
+    if (!checkPin(currentPin)) {
       setPinMsg('The old PIN is wrong')
       return
     }
@@ -152,7 +154,7 @@ export default function SettingsScreen() {
       const text = await file.text()
       const result = await importBackup(text)
       if (result.ok && result.counts) {
-        reload()
+        await reload()
         setBackupMsg(`Backup opened: ${result.counts.bills} bills, ${result.counts.customers} customers`)
       } else {
         setBackupMsg(result.error ?? 'This file could not be read')
@@ -266,6 +268,7 @@ export default function SettingsScreen() {
               inputMode="numeric"
               maxLength={4}
               value={currentPin}
+              placeholder="Old PIN"
               onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
             />
           </Field>
@@ -275,6 +278,7 @@ export default function SettingsScreen() {
               inputMode="numeric"
               maxLength={4}
               value={newPin}
+              placeholder="New PIN"
               onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
             />
           </Field>
@@ -284,6 +288,7 @@ export default function SettingsScreen() {
               inputMode="numeric"
               maxLength={4}
               value={confirmPin}
+              placeholder="New PIN again"
               onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
             />
           </Field>

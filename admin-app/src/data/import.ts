@@ -16,6 +16,7 @@ const settingsSchema = z.object({
   phone: z.string(),
   gstin: z.string(),
   logo: z.string().optional(),
+  next_bill_number: z.number().int().positive().optional(),
   updated_at: z.number(),
 })
 
@@ -127,7 +128,13 @@ export async function importBackup(text: string): Promise<ImportResult> {
   const items = backup.bill_items.filter((i) => billIds.has(i.bill_id))
 
   await db.transaction('rw', db.settings, db.services, db.customers, db.bills, db.billItems, async () => {
-    if (backup.settings) await db.settings.put(backup.settings as Settings)
+    if (backup.settings) {
+      // Never let an older backup rewind the counter — bill numbers must not be
+      // reused (RULES A5). Keep whichever next number is higher.
+      const local = await db.settings.orderBy('updated_at').reverse().first()
+      const next = Math.max(backup.settings.next_bill_number ?? 1, local?.next_bill_number ?? 1)
+      await db.settings.put({ ...(backup.settings as Settings), next_bill_number: next })
+    }
     if (backup.services.length) await db.services.bulkPut(backup.services as Service[])
     if (backup.customers.length) await db.customers.bulkPut(backup.customers as Customer[])
     if (backup.bills.length) await db.bills.bulkPut(backup.bills as Bill[])

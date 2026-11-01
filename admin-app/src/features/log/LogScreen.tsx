@@ -44,7 +44,10 @@ export default function LogScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-extrabold">Customer Log</h1>
+      <div>
+        <h1 className="text-3xl font-extrabold">Bills</h1>
+        <p className="text-sm text-muted">Every bill made on this phone.</p>
+      </div>
 
       <Field label="Find by name or phone">
         <div className="relative">
