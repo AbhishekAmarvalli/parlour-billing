@@ -77,6 +77,10 @@ describe('money formatting (RULES B1)', () => {
     expect(parseRupees('450.5')).toBe(45050)
     expect(parseRupees('1,740.50')).toBe(174050)
     expect(parseRupees('₹ 12')).toBe(1200)
+    // Typed the way people type it: "Rs. 450", "INR 1,200" (Postel's law).
+    expect(parseRupees('Rs. 450')).toBe(45000)
+    expect(parseRupees('INR 1,200')).toBe(120000)
+    expect(parseRupees('450.')).toBe(45000)
     expect(parseRupees('')).toBeNull()
     expect(parseRupees('1.999')).toBeNull()
     expect(parseRupees('-5')).toBeNull()

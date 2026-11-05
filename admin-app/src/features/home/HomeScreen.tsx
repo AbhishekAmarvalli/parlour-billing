@@ -9,8 +9,8 @@ import { formatRupees } from '../../domain/money'
 import { formatBillNumber } from '../../domain/numbering'
 import { billSummary } from '../../domain/summary'
 import { itemsOf } from '../../data/repo'
-import { Button } from '../../ui/kit'
-import { GearIcon, LockIcon } from '../../ui/icons'
+import { Button, Notice } from '../../ui/kit'
+import { CheckIcon, GearIcon, LockIcon } from '../../ui/icons'
 
 export default function HomeScreen({ onLock }: { onLock: () => void }) {
   const { settings, bills, items, loading } = useData()
@@ -27,8 +27,11 @@ export default function HomeScreen({ onLock }: { onLock: () => void }) {
   const status = loading
     ? 'Loading bills…'
     : bills.length === 0
-      ? 'No bills yet. Tap New Bill to start'
+      ? 'Saved on this phone · no bills yet'
       : `Saved on this phone · ${bills.length} bills`
+
+  // The bill just saved, so the end of the job says what happened (peak-end rule).
+  const savedBill = savedNumber ? bills.find((bill) => bill.bill_number === Number(savedNumber)) : undefined
 
   return (
     <div className="flex flex-col gap-5">
@@ -61,9 +64,18 @@ export default function HomeScreen({ onLock }: { onLock: () => void }) {
       </header>
 
       {savedNumber ? (
-        <p className="rounded-2xl bg-ink px-4 py-3 text-sm font-bold text-soft" role="status">
-          Bill {formatBillNumber(Number(savedNumber))} saved on phone
-        </p>
+        <Notice
+          tone="ok"
+          title={`Bill ${formatBillNumber(Number(savedNumber))} saved`}
+          onDismiss={() => navigate('/', { replace: true })}
+        >
+          <span className="flex items-center gap-1.5">
+            <CheckIcon className="h-4 w-4 shrink-0" />
+            {savedBill
+              ? `${formatRupees(savedBill.grand_total)} · ${savedBill.customer_name}`
+              : 'Saved on this phone. It is in Bills.'}
+          </span>
+        </Notice>
       ) : null}
 
       <section className="rounded-3xl bg-ink p-5 text-white" aria-label="Today’s money">
@@ -103,11 +115,8 @@ export default function HomeScreen({ onLock }: { onLock: () => void }) {
         <div className="mt-3 flex flex-col gap-3">
           {bills.length === 0 && !loading ? (
             <div className="rounded-2xl border border-dashed border-line bg-surface p-6 text-center">
-              <p className="text-base font-bold text-ink">No bills yet</p>
-              <p className="mt-1 text-sm text-muted">Tap Make New Bill to write the first one.</p>
-              <div className="mt-4">
-                <Button onClick={() => navigate('/new-bill')}>Make New Bill</Button>
-              </div>
+              <p className="text-base font-bold text-ink">Your first bill goes here</p>
+              <p className="mt-1 text-sm text-muted">Tap Make New Bill above to write it.</p>
             </div>
           ) : (
             bills.slice(0, 4).map((bill) => (

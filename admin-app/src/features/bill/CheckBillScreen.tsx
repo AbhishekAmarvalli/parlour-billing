@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../../app/DataProvider'
-import { Button, Card, EmptyLine } from '../../ui/kit'
+import { Button, Card, EmptyLine, Notice } from '../../ui/kit'
 import { draftTotals, type Draft, type DraftLine } from '../../domain/draft'
 import { formatRupees, parseRupees } from '../../domain/money'
 import { saveNewBill } from '../../data/repo'
@@ -14,6 +14,7 @@ export default function CheckBillScreen() {
   const navigate = useNavigate()
   const { settings, reload } = useData()
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const stored = getDraft()
   const draft: Draft | null = stored
@@ -47,6 +48,7 @@ export default function CheckBillScreen() {
       return
     }
     setSaving(true)
+    setSaveError('')
     try {
       const number = await saveNewBill(draft)
       clearDraft()
@@ -55,7 +57,9 @@ export default function CheckBillScreen() {
       await reload()
       navigate(`/?saved=${number}`, { replace: true })
     } catch {
+      // Never fail silently: she has to know the bill is still only a draft.
       setSaving(false)
+      setSaveError('Could not save the bill. It is still here. Try again.')
     }
   }
 
@@ -63,6 +67,12 @@ export default function CheckBillScreen() {
     <div className="flex flex-col gap-4 pb-40">
       <h1 className="text-3xl font-extrabold">Check Bill</h1>
       <p className="-mt-2 text-sm text-muted">Read it once. Save it, or go back and change something.</p>
+
+      {saveError ? (
+        <Notice tone="error" title="Bill not saved" onDismiss={() => setSaveError('')}>
+          {saveError}
+        </Notice>
+      ) : null}
 
       <Card className="p-5">
         <div className="text-center">

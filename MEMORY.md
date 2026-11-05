@@ -2,7 +2,7 @@
 
 Project context for anyone (or any AI assistant) who picks this up. Read this first, then PRD.md, RULES.md, ARCHITECTURE.md, DESIGN.md, WORKFLOW.md.
 
-Last updated: 1 Nov 2026
+Last updated: 5 Nov 2026
 
 ## What this is
 
@@ -54,6 +54,7 @@ A mobile admin app for a beauty parlour. The owner makes bills on their Android 
 - Requirements gathered through a question-and-answer round.
 - Clickable mockup made (6 screens: PIN, Home, New Bill, Check Bill, Customer Log, Reports). Settings screen not yet drawn.
 - Full plan written as a document.
+- **APK v1.5.0 built** (5 Nov 2026): the UX laws pass is inside the APK — step rail on New Bill, service search, folded price names, one dismissible Notice for every message (save errors no longer swallowed), saved-bill confirmation with number, amount and name, 48 px targets, and money fields that accept "Rs. 450"/"INR 1,200". `versionCode 6`, `versionName 1.5.0`, APK at repo root: `ParlourAdmin-v1.5.0.apk`. Built with the local JDK 21 (`.build-tools/jdk21/jdk-21.0.13+9`, was an unextracted zip; JDK 25 fails Gradle's Groovy step) and local Gradle 8.14.3 with `--offline`.
 - **APK v1.4.0 built** (2 Nov 2026): WhatsApp **share target** — sharing a contact card (vCard) or a plain number to *Parlour Admin* opens a new bill with name and number filled. Pulled (not pushed) so a share that arrives at the PIN screen still opens after unlock. `singleTask` launch mode; accepts `text/plain` and `text/vcard`.
 - **APK v1.3.0 built** (2 Nov 2026): adds customer lookup — **Pick from contacts** (system contact picker, name + mobile into the bill) and **Paste number** (a number copied from a WhatsApp chat). The app cannot read WhatsApp's private database; the contact list holds the same numbers WhatsApp uses. All of v1.2.0 below still applies. APK: `ParlourAdmin-v1.3.0.apk`.
 - **APK v1.2.0 built** (2 Nov 2026): one phone, owner = admin, all data stored locally. PIN lock, New Bill, Check Bill, Home, Bills (+cancel with reason), Reports, Excel/PDF export to Downloads, Settings (parlour details, price list, change PIN, backup/restore). v1.2.0 fixes: data refreshes right after a save (no app restart), the draft survives back/Change something, changing the PIN in Settings cannot lock the app, an older backup cannot rewind bill numbers, clearer labels and a receipt launcher icon. Code in `admin-app/` + `android/`. APK at repo root: `ParlourAdmin-v1.2.0.apk`. Demo data: `sample-backup.json`.
@@ -95,3 +96,4 @@ A mobile admin app for a beauty parlour. The owner makes bills on their Android 
 - 2 Nov 2026: v1.2.0 after phone testing — clearer screens, receipt icon, and four bug fixes (immediate data refresh, draft kept on back, PIN side-effect in Settings, bill numbers on restore). Published to GitHub (private).
 - 2 Nov 2026: v1.3.0 — customer contacts: pick from the phone's contact list, or paste a number copied from WhatsApp. GitHub release v1.3.0 created.
 - 2 Nov 2026: v1.4.0 — share-to-app target from WhatsApp opens a new bill.
+- 5 Nov 2026: UX laws pass (DESIGN.md 9). All twenty named laws are now written down with the place each one lives: New Bill shows a step rail and a service search, optional price names fold away in Settings, all feedback uses one dismissible Notice (save errors are no longer swallowed), a saved bill ends with its number and amount on Home, every target is 48 px, and money boxes accept "Rs. 450" / "₹ 1,200".

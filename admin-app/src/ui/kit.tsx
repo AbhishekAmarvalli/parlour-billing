@@ -1,5 +1,5 @@
 // Shared pieces from DESIGN.md 5: main button, secondary button, choice pill, input,
-// list row, summary card. Buttons at least 48 px, text at least 16 px (RULES B5).
+// list row, summary card, notice. Buttons at least 48 px, text at least 16 px (RULES B5).
 
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
 
@@ -28,7 +28,7 @@ export function Pill({
   return (
     <button
       {...rest}
-      className={`min-h-11 rounded-xl border-[1.5px] px-4 text-base font-bold ${
+      className={`min-h-12 rounded-xl border-[1.5px] px-4 text-base font-bold ${
         selected ? 'border-ink bg-ink text-white' : 'border-inputline bg-surface text-ink'
       } ${className}`}
     >
@@ -71,4 +71,53 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
 
 export function EmptyLine({ text }: { text: string }) {
   return <p className="px-1 py-6 text-center text-base text-muted">{text}</p>
+}
+
+/**
+ * One way to say "this happened" after an action (feedback loop, DESIGN.md 9).
+ * Ok and info messages are politely announced, errors interrupt. Every message
+ * can be dismissed so it never piles up on a long screen.
+ */
+export function Notice({
+  tone = 'ok',
+  title,
+  onDismiss,
+  children,
+}: {
+  tone?: 'ok' | 'info' | 'error'
+  title?: string
+  onDismiss?: () => void
+  children?: ReactNode
+}) {
+  const look =
+    tone === 'error'
+      ? 'border-rose bg-rose/5'
+      : tone === 'ok'
+        ? 'border-ink bg-ink text-white'
+        : 'border-line bg-surface'
+  const label = tone === 'ok' ? 'text-white' : tone === 'error' ? 'text-rose' : 'text-ink'
+  const body = tone === 'ok' ? 'text-soft' : tone === 'error' ? 'text-ink' : 'text-muted'
+  return (
+    <div
+      role={tone === 'error' ? 'alert' : 'status'}
+      className={`flex items-start gap-2 rounded-2xl border p-3 ${look}`}
+    >
+      <div className="min-w-0 flex-1">
+        {title ? <p className={`text-base font-extrabold ${label}`}>{title}</p> : null}
+        {children ? <div className={`text-sm font-bold ${body}`}>{children}</div> : null}
+      </div>
+      {onDismiss ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Hide this message"
+          className={`-my-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl font-extrabold ${
+            tone === 'ok' ? 'text-soft' : 'text-muted'
+          }`}
+        >
+          ×
+        </button>
+      ) : null}
+    </div>
+  )
 }

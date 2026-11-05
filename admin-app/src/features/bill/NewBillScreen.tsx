@@ -4,7 +4,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../../app/DataProvider'
-import { Button, Card, Field, Input, Pill } from '../../ui/kit'
+import { Button, Card, Field, Input, Notice, Pill } from '../../ui/kit'
+import { SearchIcon } from '../../ui/icons'
 import {
   addProductLine,
   addServiceLine,
@@ -37,6 +38,8 @@ export default function NewBillScreen() {
   const [errors, setErrors] = useState<string[]>([])
   // Keeps "450." typable: the input holds its own text while the line holds paise.
   const [priceText, setPriceText] = useState<Record<string, string>>({})
+  // Only shown when the price list is long: fewer choices at a time (Hick's law).
+  const [serviceQuery, setServiceQuery] = useState('')
 
   useEffect(() => {
     setDraft({ name, phone, lines, discountText: discount, mode })
@@ -105,6 +108,20 @@ export default function NewBillScreen() {
   const activeServices = services.filter((s) => s.active)
   const productLines = lines.filter((l) => l.kind === 'product')
   const serviceLines = lines.filter((l) => l.kind === 'service')
+  const query = serviceQuery.trim().toLowerCase()
+  const shownServices = query ? activeServices.filter((s) => s.name.toLowerCase().includes(query)) : activeServices
+
+  // How far along the bill is. Keeps the goal in sight (goal-gradient, DESIGN.md 9).
+  const steps: { label: string; done: boolean }[] = [
+    { label: 'Customer', done: name.trim() !== '' && /^\d{10}$/.test(phone) },
+    { label: 'Services', done: lines.length > 0 },
+    {
+      label: 'Products',
+      done: productLines.every((l) => l.name.trim() !== '' && l.unit_price > 0 && Boolean(l.gst_rate)),
+    },
+    { label: 'Paid by', done: mode === 'cash' || mode === 'upi' },
+  ]
+  const nextStep = steps.find((step) => !step.done)
 
   function makeBill() {
     const draft: Draft = {
@@ -127,17 +144,31 @@ export default function NewBillScreen() {
 
   return (
     <div className="flex flex-col gap-5 pb-40">
-      <h1 className="text-3xl font-extrabold">New Bill</h1>
+      <div>
+        <h1 className="text-3xl font-extrabold">New Bill</h1>
+        <div className="mt-3 flex items-center gap-3">
+          <div className="flex flex-1 gap-1.5" aria-hidden="true">
+            {steps.map((step) => (
+              <span
+                key={step.label}
+                className={`h-1.5 flex-1 rounded-full ${step.done ? 'bg-rose' : 'bg-track'}`}
+              />
+            ))}
+          </div>
+          <p className="shrink-0 text-xs font-bold text-muted" role="status">
+            {nextStep ? `Next: ${nextStep.label}` : 'Ready to check'}
+          </p>
+        </div>
+      </div>
 
       {errors.length > 0 && (
-        <div className="rounded-2xl border border-rose bg-rose/5 p-4" role="alert">
-          <p className="text-base font-extrabold text-rose">Check this first</p>
-          <ul className="mt-1 flex list-disc flex-col gap-0.5 pl-5 text-sm text-ink">
+        <Notice tone="error" title="Check this first" onDismiss={() => setErrors([])}>
+          <ul className="mt-1 flex list-disc flex-col gap-0.5 pl-5">
             {errors.map((error) => (
               <li key={error}>{error}</li>
             ))}
           </ul>
-        </div>
+        </Notice>
       )}
 
       <Card>
@@ -156,21 +187,13 @@ export default function NewBillScreen() {
             />
           </Field>
           {canPickContact() ? (
-            <div className="-mt-2 flex gap-2">
-              <button
-                type="button"
-                onClick={() => openContactPicker()}
-                className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-[1.5px] border-ink bg-surface px-3 text-sm font-extrabold text-ink active:bg-track"
-              >
+            <div className="-mt-1 flex gap-2">
+              <Button variant="secondary" onClick={() => openContactPicker()} className="flex-1 text-base">
                 Pick from contacts
-              </button>
-              <button
-                type="button"
-                onClick={pasteFromClipboard}
-                className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-[1.5px] border-ink bg-surface px-3 text-sm font-extrabold text-ink active:bg-track"
-              >
+              </Button>
+              <Button variant="secondary" onClick={pasteFromClipboard} className="flex-1 text-base">
                 Paste number
-              </button>
+              </Button>
             </div>
           ) : null}
         </div>
@@ -179,9 +202,26 @@ export default function NewBillScreen() {
       <section>
         <h2 className="text-lg font-extrabold">2 · Services</h2>
         <p className="text-sm text-muted">Tap a price. Tap again for the same service twice.</p>
+        {activeServices.length > 6 ? (
+          <div className="relative mt-3">
+            <Input
+              type="search"
+              inputMode="search"
+              value={serviceQuery}
+              onChange={(e) => setServiceQuery(e.target.value)}
+              placeholder="Find a service"
+              aria-label="Find a service"
+              className="pr-11"
+            />
+            <SearchIcon className="pointer-events-none absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 text-muted" />
+          </div>
+        ) : null}
         <div className="mt-3 flex flex-col gap-3">
           {activeServices.length === 0 && <p className="text-base text-muted">No services yet. Add them in Settings.</p>}
-          {activeServices.map((service) => (
+          {activeServices.length > 0 && shownServices.length === 0 && (
+            <p className="text-base text-muted">No service matches “{serviceQuery.trim()}”.</p>
+          )}
+          {shownServices.map((service) => (
             <div key={service.id} className="rounded-2xl border border-line bg-surface p-4">
               <p className="text-base font-extrabold">
                 {service.name}
@@ -230,7 +270,7 @@ export default function NewBillScreen() {
                       type="button"
                       aria-label={`Remove ${line.name}`}
                       onClick={() => setLines((current) => removeLine(current, line.key))}
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-xl font-extrabold text-muted active:bg-track"
+                      className="flex h-12 w-12 items-center justify-center rounded-xl text-xl font-extrabold text-muted active:bg-track"
                     >
                       ×
                     </button>

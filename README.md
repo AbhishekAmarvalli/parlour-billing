@@ -33,7 +33,7 @@ is in `admin-app/src/domain/` with unit tests, and bills are never deleted — o
 
 ## Install
 
-Copy **`ParlourAdmin-v1.4.0.apk`** (repo root, or use the button at the top) to an Android phone and open it. Allow
+Copy **`ParlourAdmin-v1.5.0.apk`** (repo root, or use the button at the top) to an Android phone and open it. Allow
 "install from unknown sources" when asked. Android 7.0+ (minSdk 24).
 
 ## Try the exports

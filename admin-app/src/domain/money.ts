@@ -1,8 +1,13 @@
 // Money helpers. Store whole paise; format only when showing. RULES B1.
 
-/** Parse a rupee string ("450", "450.5", "1,740.50") into paise, or null if not a valid amount. */
+/**
+ * Parse a rupee string ("450", "450.5", "1,740.50", "₹ 450", "Rs. 50") into paise,
+ * or null if it is not an amount. Accepts the messy way people type money.
+ */
 export function parseRupees(input: string): number | null {
-  const cleaned = input.replace(/[₹,\s]/g, '')
+  const cleaned = input
+    .replace(/[₹,\s]/g, '')
+    .replace(/^(?:rs|inr)\.?/i, '')
   if (cleaned === '') return null
   if (!/^\d+(\.\d{0,2})?$/.test(cleaned)) return null
   const [whole, frac = ''] = cleaned.split('.')

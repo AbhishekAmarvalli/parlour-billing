@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useData } from '../../app/DataProvider'
-import { Button, Card, Field, Input } from '../../ui/kit'
+import { Button, Card, Field, Input, Notice } from '../../ui/kit'
 import { saveServices, saveSettings } from '../../data/repo'
 import { importBackup, lastImportAt } from '../../data/import'
 import { buildBackup } from '../../data/backupExport'
@@ -25,6 +25,8 @@ interface Row {
   l3: string
   active: boolean
 }
+
+type Msg = { text: string; tone: 'ok' | 'error' } | null
 
 function toRow(service: Service): Row {
   return {
@@ -48,17 +50,19 @@ export default function SettingsScreen() {
   const { settings, services, reload } = useData()
 
   const [parlour, setParlour] = useState({ parlour_name: '', address: '', phone: '', gstin: '' })
-  const [detailsMsg, setDetailsMsg] = useState('')
+  const [detailsMsg, setDetailsMsg] = useState<Msg>(null)
 
   const [rows, setRows] = useState<Row[]>([])
-  const [listMsg, setListMsg] = useState('')
+  const [listMsg, setListMsg] = useState<Msg>(null)
+  // Price names are optional, so they stay folded away until asked for.
+  const [shownNames, setShownNames] = useState<Record<string, boolean>>({})
 
   const [currentPin, setCurrentPin] = useState('')
   const [newPin, setNewPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
-  const [pinMsg, setPinMsg] = useState('')
+  const [pinMsg, setPinMsg] = useState<Msg>(null)
 
-  const [backupMsg, setBackupMsg] = useState('')
+  const [backupMsg, setBackupMsg] = useState<Msg>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -81,12 +85,12 @@ export default function SettingsScreen() {
   async function saveDetails() {
     const check = settingsSchema.safeParse(parlour)
     if (!check.success) {
-      setDetailsMsg('Type the parlour name')
+      setDetailsMsg({ text: 'Type the parlour name', tone: 'error' })
       return
     }
     await saveSettings(parlour)
     await reload()
-    setDetailsMsg('Details saved')
+    setDetailsMsg({ text: 'Details saved', tone: 'ok' })
   }
 
   function patchRow(id: string, patch: Partial<Row>) {
@@ -95,7 +99,7 @@ export default function SettingsScreen() {
 
   async function saveList() {
     if (rows.some((row) => row.name.trim() === '')) {
-      setListMsg('Every service needs a name')
+      setListMsg({ text: 'Every service needs a name', tone: 'error' })
       return
     }
     const cleaned: Service[] = rows.map((row, index) => ({
@@ -113,28 +117,28 @@ export default function SettingsScreen() {
     }))
     await saveServices(cleaned)
     await reload()
-    setListMsg('Price list saved')
+    setListMsg({ text: 'Price list saved', tone: 'ok' })
   }
 
   function changePin() {
     // checkPin does not count a wrong try, so a typo here cannot lock the app.
     if (!checkPin(currentPin)) {
-      setPinMsg('The old PIN is wrong')
+      setPinMsg({ text: 'The old PIN is wrong', tone: 'error' })
       return
     }
     if (!isValidPin(newPin)) {
-      setPinMsg('The new PIN must be 4 numbers')
+      setPinMsg({ text: 'The new PIN must be 4 numbers', tone: 'error' })
       return
     }
     if (newPin !== confirmPin) {
-      setPinMsg('The two new PINs did not match')
+      setPinMsg({ text: 'The two new PINs did not match', tone: 'error' })
       return
     }
     setPin(newPin)
     setCurrentPin('')
     setNewPin('')
     setConfirmPin('')
-    setPinMsg('PIN changed')
+    setPinMsg({ text: 'PIN changed', tone: 'ok' })
   }
 
   async function backupNow() {
@@ -142,9 +146,12 @@ export default function SettingsScreen() {
       const text = await buildBackup()
       const name = `parlour-backup-${new Date().toISOString().slice(0, 10)}.json`
       const where = saveFile(name, new TextEncoder().encode(text))
-      setBackupMsg(where === 'phone' ? `Backup saved to Downloads: ${name}` : `Backup downloaded: ${name}`)
+      setBackupMsg({
+        text: where === 'phone' ? `Backup saved to Downloads: ${name}` : `Backup downloaded: ${name}`,
+        tone: 'ok',
+      })
     } catch {
-      setBackupMsg('Backup could not be made')
+      setBackupMsg({ text: 'Backup could not be made', tone: 'error' })
     }
   }
 
@@ -155,15 +162,23 @@ export default function SettingsScreen() {
       const result = await importBackup(text)
       if (result.ok && result.counts) {
         await reload()
-        setBackupMsg(`Backup opened: ${result.counts.bills} bills, ${result.counts.customers} customers`)
+        setBackupMsg({
+          text: `Backup opened: ${result.counts.bills} bills, ${result.counts.customers} customers`,
+          tone: 'ok',
+        })
       } else {
-        setBackupMsg(result.error ?? 'This file could not be read')
+        setBackupMsg({ text: result.error ?? 'This file could not be read', tone: 'error' })
       }
     } catch {
-      setBackupMsg('This file could not be read')
+      setBackupMsg({ text: 'This file could not be read', tone: 'error' })
     } finally {
       if (fileRef.current) fileRef.current.value = ''
     }
+  }
+
+  function namesOpen(row: Row): boolean {
+    const saved = row.l1.trim() !== '' || row.l2.trim() !== '' || row.l3.trim() !== ''
+    return shownNames[row.id] ?? saved
   }
 
   return (
@@ -193,7 +208,11 @@ export default function SettingsScreen() {
           <Button variant="secondary" onClick={saveDetails}>
             Save details
           </Button>
-          {detailsMsg ? <p className="text-sm font-bold text-muted">{detailsMsg}</p> : null}
+          {detailsMsg ? (
+            <Notice tone={detailsMsg.tone} onDismiss={() => setDetailsMsg(null)}>
+              {detailsMsg.text}
+            </Notice>
+          ) : null}
         </div>
       </Card>
 
@@ -234,19 +253,29 @@ export default function SettingsScreen() {
                   />
                 ))}
               </div>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {(['l1', 'l2', 'l3'] as const).map((field) => (
-                  <Input
-                    key={field}
-                    type="text"
-                    value={row[field]}
-                    onChange={(e) => patchRow(row.id, { [field]: e.target.value } as Partial<Row>)}
-                    placeholder="Name (optional)"
-                    aria-label="Price name"
-                    className="min-h-11 text-sm"
-                  />
-                ))}
-              </div>
+              {namesOpen(row) ? (
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {(['l1', 'l2', 'l3'] as const).map((field) => (
+                    <Input
+                      key={field}
+                      type="text"
+                      value={row[field]}
+                      onChange={(e) => patchRow(row.id, { [field]: e.target.value } as Partial<Row>)}
+                      placeholder="Name (optional)"
+                      aria-label="Price name"
+                      className="min-h-11 text-sm"
+                    />
+                  ))}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setShownNames((current) => ({ ...current, [row.id]: !namesOpen(row) }))}
+                aria-expanded={namesOpen(row)}
+                className="mt-1 -mb-1 ml-auto flex min-h-12 items-center rounded-xl px-2 text-sm font-bold text-rose active:bg-track"
+              >
+                {namesOpen(row) ? 'Hide price names' : 'Name the prices (optional)'}
+              </button>
             </div>
           ))}
           <div className="flex gap-3">
@@ -255,7 +284,11 @@ export default function SettingsScreen() {
             </Button>
             <Button onClick={saveList}>Save price list</Button>
           </div>
-          {listMsg ? <p className="text-sm font-bold text-muted">{listMsg}</p> : null}
+          {listMsg ? (
+            <Notice tone={listMsg.tone} onDismiss={() => setListMsg(null)}>
+              {listMsg.text}
+            </Notice>
+          ) : null}
         </div>
       </Card>
 
@@ -295,7 +328,11 @@ export default function SettingsScreen() {
           <Button variant="secondary" onClick={changePin}>
             Change PIN
           </Button>
-          {pinMsg ? <p className="text-sm font-bold text-muted">{pinMsg}</p> : null}
+          {pinMsg ? (
+            <Notice tone={pinMsg.tone} onDismiss={() => setPinMsg(null)}>
+              {pinMsg.text}
+            </Notice>
+          ) : null}
         </div>
       </Card>
 
@@ -317,7 +354,11 @@ export default function SettingsScreen() {
             aria-label="Open a backup file"
             onChange={(e) => restoreFile(e.target.files?.[0])}
           />
-          {backupMsg ? <p className="text-sm font-bold text-muted">{backupMsg}</p> : null}
+          {backupMsg ? (
+            <Notice tone={backupMsg.tone} onDismiss={() => setBackupMsg(null)}>
+              {backupMsg.text}
+            </Notice>
+          ) : null}
           {importedAt ? (
             <p className="text-xs text-muted">
               Last opened backup: {new Date(importedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} at{' '}

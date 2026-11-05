@@ -11,8 +11,8 @@ android {
     minSdk 24
     // 34 keeps the classic status bar; 35 would force edge-to-edge drawing behind it.
     targetSdk 34
-    versionCode 5
-    versionName '1.4.0'
+    versionCode 6
+    versionName '1.5.0'
   }
 
   buildTypes {
